@@ -49,18 +49,20 @@
 start_render:                     
     jmp !x render_false         side 0                      ; START bit has been rendered or the previous bit is TRUE
 render_true:
-    nop                         side 1 [(BIT_REF / 2) - 1]  ; +1 half-bit set for rendering a bit set to TRUE
+    nop                         side 1 [(BIT_REF / 4) - 1]  ; +1 half-bit set for rendering a bit set to TRUE
+    nop                         side 0 [(BIT_REF / 4) - 1]
     out  x, 1                   side 0 [(BIT_REF / 2) - 3]  ; +0 field of the TRUE half-bit, 2 iterations reserved
     jmp y-- start_render        side 0                      ; 1. Not the last TXFIFO bit, proceeding to the entry point
     jmp end_render              side 0                      ; 2. The last TXFIFO bit, jumping to the end iteration
 render_false:
     nop                         side 0 [(BIT_REF / 2) - 1]  ; +0 half-bit set for rendering a bit set to FALSE
-    out  x, 1                   side 1 [(BIT_REF / 2) - 4]  ; +1 field of the FALSE half-bit, 3 iterations reserved
-    jmp !x bypass_false         side 1                      ; 1. Additional transition handler: from FALSE to TRUE
-    jmp y-- render_true         side 1                      ; 2. Next TXFIFO bit is set to TRUE: avoiding short signal spike
-    jmp end_render              side 1                      ; 3. The last TXFIFO bit, jumping to the end iteration
+    nop                         side 1 [(BIT_REF / 4) - 1]
+    out  x, 1                   side 0 [(BIT_REF / 4) - 4]  ; +1 field of the FALSE half-bit, 3 iterations reserved
+    jmp !x bypass_false         side 0                      ; 1. Additional transition handler: from FALSE to TRUE
+    jmp y-- render_true         side 0                      ; 2. Next TXFIFO bit is set to TRUE: avoiding short signal spike
+    jmp end_render              side 0                      ; 3. The last TXFIFO bit, jumping to the end iteration
 bypass_false:
-    jmp y-- start_render        side 1                      ; 2. Not the last TXFIFO bit, proceeding to the entry point
+    jmp y-- start_render        side 0                      ; 2. Not the last TXFIFO bit, proceeding to the entry point
 end_render:
     nop                         side 0 [(BIT_REF / 2) - 1]  ; Awaiting 3x half-bit time to end the current character's
     nop                         side 0 [(BIT_REF / 2) - 1]  ; transmission, the ECC parity code calculation is yielded to C

@@ -9,11 +9,8 @@
 
 #include "redeye.h"
 
-#include "pico/stdlib.h"
 #include "hardware/pio.h"
 #include "hardware/gpio.h"
-
-#include <assert.h>
 
 /* =========================================================================
  * W board LED helper functions
@@ -63,4 +60,19 @@ const uint8_t redeye_ecc(uint8_t c)
 const uint16_t redeye_frame(uint8_t c)
 {
     return (0x0000 | (redeye_ecc(c) << 8) | c) << 4;
+}
+
+void redeye_putc(const uint8_t c)
+{
+    pico_set_led(true);
+    pio_sm_put_blocking(pio, sm, (redeye_frame(c) << 16) );
+    pico_set_led(false);
+}
+
+void redeye_putesc(const uint8_t c)
+{
+    pico_set_led(true);
+    pio_sm_put_blocking(pio, sm, (redeye_frame(REDEYE_ESCAPE) << 16) );
+    pico_set_led(false);
+    redeye_putc(c);
 }
