@@ -1,14 +1,30 @@
 ; ============================================================================
-; redeye.pio  –  HP 82240B RedEye protocol frame emulator
+; redeye.pio  -  HP 82240B RedEye protocol frame emulator
 ; ============================================================================
 ;
 ; SIGNAL POLARITY (TSOP1832 demodulated output, active-low):
-;   burst present  → GPIO LOW   (carrier detected)
-;   burst absent   → GPIO HIGH  (idle)
+;   burst present  -> GPIO LOW   (carrier detected)
+;   burst absent   -> GPIO HIGH  (idle)
 ;
 ; OSR layout (MSB first, left-shift):
 ;   bits [31:20]  = 12 payload bits: EC3 EC2 EC1 EC0 D7 D6 D5 D4 D3 D2 D1 D0
 ;   bits [19: 0]  = unused (zero)
+; 
+; Signal timing:
+;   BURST: [213.64us] = (15.26us * 2) * 7 = BIT/4
+;   BIT/2: [427.25us] = (1 / 32768) * (28 / 2) * [10^6]
+;   BIT  : [854.49us]
+;   CFREQ: [32768Hz]
+; 
+; Encoding:
+;   POSITION    1 BIT/2    2 BIT/2    3 BIT/2    LENGTH
+;   ---------------------------------------------------
+;   Bit
+;   --------
+;   START       1 BURST    1 BURST    1 BURST    3xBIT/2
+;   TRUE        1 BURST      ---         X       2xBIT/2
+;   FALSE         ---      1 BURST       X       2xBIT/2
+;   STOP          ---        ---        ---      3xBIT/2
 ;
 ; ============================================================================
 
