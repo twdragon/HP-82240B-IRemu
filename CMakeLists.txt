@@ -18,6 +18,18 @@ project(HP82240B-IRemu C CXX ASM)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 
+# Tests: host architecture
+include(ExternalProject)
+ExternalProject_Add(HP82240B-IRemu_tests
+    PREFIX tests
+    SOURCE_DIR ${CMAKE_SOURCE_DIR}/tests
+    BINARY_DIR ${CMAKE_BINARY_DIR}/tests
+    CMAKE_ARGS "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
+    BUILD_ALWAYS ON
+    INSTALL_COMMAND ""
+    TEST_BEFORE_INSTALL ON
+)
+
 pico_sdk_init()
 
 include_directories(
@@ -26,19 +38,22 @@ include_directories(
 )
 
 add_executable(testprint
-    src/testprint.c
+    src/redeye.c
+    src/printer.c
 )
 
 # Generate the PIO header from the .pio source
-pico_generate_pio_header(testprint ${CMAKE_CURRENT_SOURCE_DIR}/pio/ircomm.pio)
+pico_generate_pio_header(testprint ${CMAKE_CURRENT_SOURCE_DIR}/pio/redeye.pio)
 
 if (PICO_CYW43_SUPPORTED)
-    target_link_libraries(testprint pico_cyw43_arch_none)
+    target_link_libraries(testprint 
+        pico_cyw43_arch_none
+    )
 endif()
 
 target_link_libraries(testprint
     pico_stdlib
-    pico_cyw43_arch_none
+    pico_bit_ops
     hardware_pio
     hardware_clocks
     hardware_gpio
