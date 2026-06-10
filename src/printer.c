@@ -85,7 +85,7 @@ int main(void)
         pico_set_led(true);
         pio_sm_put_blocking(pio, sm, (redeye_frame(65) << 16) );
         pico_set_led(false);
-        sleep_ms(300);
+        sleep_ms(1000);
     }
     pio_remove_program_and_unclaim_sm(&redeye_program, pio, sm, offset);
     return 0;
