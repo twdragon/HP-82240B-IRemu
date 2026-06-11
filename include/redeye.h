@@ -26,6 +26,7 @@
 #define IR_SIGNAL_PIN (IR_TRANSMITTER_PIN - SIGNAL_PIN_OFFSET)
 
 /* Printer hardware definition constants */
+#define LINEFEED_DURATION 1200
 #define CHAR_LINE_WIDTH 24
 #define WCHAR_LINE_WIDTH 12
 #define DOT_CHAR_WIDTH 6
@@ -38,18 +39,20 @@
 #define REDEYE_LF     10
 #define REDEYE_RESET  255
 #define REDEYE_TEST   254
-#define REDEYE_SET2X  253
-#define REDEYE_END2X  252
+#define REDEYE_SETWC  253
+#define REDEYE_ENDWC  252
 #define REDEYE_SETUL  251
 #define REDEYE_ENDUL  250
 #define REDEYE_ECMA94 249 // ISO8859-1 [Latin-1]
 #define REDEYE_ROMAN8 248
 
-/* RedEye protocol definition functions */
+/* RedEye state description variables */
+static bool redeye_underline = false;
+static bool redeye_wchar = false;
+
+/* RedEye protocol definition functions - forward declarations */
 const uint8_t redeye_ecc      (uint8_t c);
 const uint16_t redeye_frame   (uint8_t c);
-void redeye_putc              (const uint8_t c);
-void redeye_putesc            (const uint8_t c);
 
 /* LED functions */
 int pico_led_init(void);
@@ -66,15 +69,16 @@ static inline void redeye_printer_init()
     initialised = 0xFF;
 
     stdio_init_all();
-    pico_led_init();
-    bool success = pio_claim_free_sm_and_add_program_for_gpio_range(&redeye_program, 
-                                                                    &pio,
-                                                                    &sm, 
-                                                                    &offset, 
-                                                                    0, 
-                                                                    0,
-                                                                    true);
-    hard_assert(success);
+    pico_led_init(); 
+    bool init_success = 
+        pio_claim_free_sm_and_add_program_for_gpio_range(&redeye_program, 
+                                                         &pio,
+                                                         &sm, 
+                                                         &offset, 
+                                                         0, 
+                                                         0,
+                                                         true);
+    hard_assert(init_success);
     redeye_program_init(pio, sm, offset, IR_SIGNAL_PIN);
 }
 
@@ -82,6 +86,95 @@ static inline void redeye_printer_shutdown()
 {
     if(initialised == 0xFF)
         pio_remove_program_and_unclaim_sm(&redeye_program, pio, sm, offset);
+}
+
+/* RedEye protocol definition functions - inline low-level */
+
+static inline void redeye_putc(const uint8_t c)
+{
+    pico_set_led(true);
+    pio_sm_put_blocking(pio, sm, (redeye_frame(c) << 16) );
+    pico_set_led(false);
+}
+
+static inline void redeye_putesc(const uint8_t c)
+{
+    pico_set_led(true);
+    pio_sm_put_blocking(pio, sm, (redeye_frame(REDEYE_ESCAPE) << 16) );
+    pico_set_led(false);
+    redeye_putc(c);
+}
+
+static inline void redeye_set_underline()
+{
+    redeye_putesc(REDEYE_SETUL);
+    redeye_underline = true;
+}
+
+static inline void redeye_stop_underline()
+{
+    redeye_putesc(REDEYE_ENDUL);
+    redeye_underline = false;
+}
+
+static inline void redeye_set_wchar()
+{
+    redeye_putesc(REDEYE_SETWC);
+    redeye_wchar = true;
+}
+
+static inline void redeye_stop_wchar()
+{
+    redeye_putesc(REDEYE_ENDWC);
+    redeye_wchar = false;
+}
+
+static inline void redeye_set_Roman8()
+{
+    redeye_putesc(REDEYE_ROMAN8);
+}
+
+static inline void redeye_set_Latin1()
+{
+    redeye_putesc(REDEYE_ECMA94);
+}
+
+static inline uint16_t redeye_putln(const char* str, const bool open)
+{
+    int len = strlen(str);
+    uint16_t ldiff = 0;
+    int  lprint = len;
+    char strbuf[CHAR_LINE_WIDTH];
+    if(redeye_wchar)
+    {
+        if(len > WCHAR_LINE_WIDTH)
+        {
+            strncpy(strbuf, str, WCHAR_LINE_WIDTH);
+            ldiff = (uint16_t)(len - WCHAR_LINE_WIDTH);
+            lprint = WCHAR_LINE_WIDTH;
+        }
+        else
+            strncpy(strbuf, str, len);
+    }
+    else
+    {
+        if(len > CHAR_LINE_WIDTH)
+        {
+            strncpy(strbuf, str, CHAR_LINE_WIDTH);
+            ldiff = (uint16_t)(len - CHAR_LINE_WIDTH);
+            lprint = CHAR_LINE_WIDTH;
+        }
+        else
+            strncpy(strbuf, str, len);
+    }
+    for(int i = 0; i < lprint; i++)
+    {
+        redeye_putc((uint8_t)strbuf[i]);
+    }
+    if(!open)
+        redeye_putc(REDEYE_LF);
+    sleep_ms(LINEFEED_DURATION);
+    return ldiff;
 }
 
 #endif /* REDEYE_H */

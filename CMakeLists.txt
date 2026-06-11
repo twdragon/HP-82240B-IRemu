@@ -17,6 +17,13 @@ project(HP82240B-IRemu C CXX ASM)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-stringop-overflow")
+
+# Options
+option(BUILD_PRINTER_TESTER
+    "Builds printer tester application instead of the main driver"
+    OFF
+)
 
 # Tests: host architecture
 include(ExternalProject)
@@ -37,31 +44,57 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-add_executable(testprint
-    src/redeye.c
-    src/printer.c
-)
+if(BUILD_PRINTER_TESTER)
 
-# Generate the PIO header from the .pio source
-pico_generate_pio_header(testprint ${CMAKE_CURRENT_SOURCE_DIR}/pio/redeye.pio)
-
-if (PICO_CYW43_SUPPORTED)
-    target_link_libraries(testprint 
-        pico_cyw43_arch_none
+    add_executable(test_printer
+        src/redeye.c
+        src/test_printer.c
     )
-endif()
 
-target_link_libraries(testprint
-    pico_stdlib
-    pico_bit_ops
-    hardware_pio
-    hardware_clocks
-    hardware_gpio
-)
+    pico_generate_pio_header(test_printer ${CMAKE_CURRENT_SOURCE_DIR}/pio/redeye.pio)
 
-# Enable USB or UART stdout if you wish (for debugging)
-pico_enable_stdio_usb(testprint 1)
+    if (PICO_CYW43_SUPPORTED)
+        target_link_libraries(test_printer
+            pico_cyw43_arch_none
+        )
+    endif()
 
-# Create UF2, bin, etc
-pico_add_extra_outputs(testprint)
+    target_link_libraries(test_printer
+        pico_stdlib
+        pico_bit_ops
+        hardware_pio
+        hardware_clocks
+        hardware_gpio
+    )
+
+    pico_enable_stdio_usb(test_printer 1)
+    pico_add_extra_outputs(test_printer)
+    
+else(BUILD_PRINTER_TESTER)
+
+    add_executable(printer
+        src/redeye.c
+        src/printer.c
+    )
+
+    pico_generate_pio_header(printer ${CMAKE_CURRENT_SOURCE_DIR}/pio/redeye.pio)
+
+    if (PICO_CYW43_SUPPORTED)
+        target_link_libraries(printer
+            pico_cyw43_arch_none
+        )
+    endif()
+
+    target_link_libraries(printer
+        pico_stdlib
+        pico_bit_ops
+        hardware_pio
+        hardware_clocks
+        hardware_gpio
+    )
+
+    pico_enable_stdio_usb(printer 1)
+    pico_add_extra_outputs(printer)
+
+endif() #BUILD_PRINTER_TESTER
 
