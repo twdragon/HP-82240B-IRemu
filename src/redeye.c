@@ -65,7 +65,7 @@ const uint16_t redeye_frame(uint8_t c)
 uint8_t redeye_transcode_latin1(const uint32_t uc)
 {
     uint8_t c = REDEYE_FILLER;
-    uint8_t* codes = &uc;
+    uint8_t* codes = (uint8_t*)&uc;
     if((uc >= 0x20) && (uc <= 0x7E)) // ASCII part
         c = codes[0];
     else if((codes[1] == 0xC2) && 
@@ -100,7 +100,7 @@ uint8_t redeye_transcode_latin1(const uint32_t uc)
         case 0xE1B4A8:
             c = 0x87;
             break;
-        case 0xE28882   // Partial Differential
+        case 0xE28882:  // Partial Differential
             c = 0x88;
             break;
         case 0xE289A4:  // Less-than Or Equal To
