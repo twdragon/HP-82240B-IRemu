@@ -19,24 +19,15 @@
 #endif
 
 #include "redeye.pio.h"
+#include "utf8transcoder.h"
 
-#define IR_TRANSMITTER_PIN 5
-
-#define SIGNAL_PIN_OFFSET 2
-#define IR_SIGNAL_PIN (IR_TRANSMITTER_PIN - SIGNAL_PIN_OFFSET)
-
-/* Printer hardware definition constants */
-#define LINEFEED_DURATION 1200
-#define CHAR_LINE_WIDTH 24
-#define WCHAR_LINE_WIDTH 12
-#define DOT_CHAR_WIDTH 6
-#define DOT_CHAR_HEIGHT 8
-#define DOT_LINE_WIDTH (DOT_CHAR_WIDTH * CHAR_LINE_WIDTH)
+#include "config.h"
 
 /* RedEye protocol command table */
 #define REDEYE_ESCAPE 27
 #define REDEYE_CR     4
 #define REDEYE_LF     10
+#define REDEYE_FILLER 158 
 #define REDEYE_RESET  255
 #define REDEYE_TEST   254
 #define REDEYE_SETWC  253
@@ -49,10 +40,15 @@
 /* RedEye state description variables */
 static bool redeye_underline = false;
 static bool redeye_wchar = false;
+static bool redeye_roman8 = true;
+static bool redeye_latin1 = false;
 
 /* RedEye protocol definition functions - forward declarations */
 const uint8_t redeye_ecc      (uint8_t c);
 const uint16_t redeye_frame   (uint8_t c);
+
+/* Character code substitution routines API */
+uint8_t redeye_transcode_latin1(const uint32_t uc);
 
 /* LED functions */
 int pico_led_init(void);
@@ -99,10 +95,9 @@ static inline void redeye_putc(const uint8_t c)
 
 static inline void redeye_putesc(const uint8_t c)
 {
-    pico_set_led(true);
-    pio_sm_put_blocking(pio, sm, (redeye_frame(REDEYE_ESCAPE) << 16) );
-    pico_set_led(false);
+    redeye_putc(REDEYE_ESCAPE);
     redeye_putc(c);
+    sleep_ms(1);
 }
 
 static inline void redeye_set_underline()
@@ -132,11 +127,15 @@ static inline void redeye_stop_wchar()
 static inline void redeye_set_Roman8()
 {
     redeye_putesc(REDEYE_ROMAN8);
+    redeye_roman8 = true;
+    redeye_latin1 = false;
 }
 
 static inline void redeye_set_Latin1()
 {
     redeye_putesc(REDEYE_ECMA94);
+    redeye_roman8 = false;
+    redeye_latin1 = true;
 }
 
 static inline uint16_t redeye_putln(const char* str, const bool open)

@@ -19,11 +19,38 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-stringop-overflow")
 
-# Options
+# Application options
+# =============================================================================
 option(BUILD_PRINTER_TESTER
     "Builds printer tester application instead of the main driver"
     OFF
 )
+set(PICO_GPIO_PIN_OFFSET 2)
+if(NOT DEFINED PICO_TRANSMITTER_PIN)
+    set(PICO_TRANSMITTER_PIN 5)
+endif()
+
+# Printer hardware options
+# =============================================================================
+if(NOT DEFINED LINEFEED_DURATION)
+    set(LINEFEED_DURATION 1200)
+endif()
+if(NOT DEFINED CHAR_LINE_WIDTH)
+    set(CHAR_LINE_WIDTH 24)
+endif()
+if(NOT DEFINED WCHAR_LINE_WIDTH)
+    set(WCHAR_LINE_WIDTH 12)
+endif()
+if(NOT DEFINED DOT_CHAR_WIDTH)
+    set(DOT_CHAR_WIDTH 6)
+endif()
+if(NOT DEFINED DOT_CHAR_HEIGHT)
+    set(DOT_CHAR_HEIGHT 8)
+endif()
+if(NOT DEFINED DOT_LINE_WIDTH)
+    set(DOT_LINE_WIDTH 166)
+endif()
+# =============================================================================
 
 # Tests: host architecture
 include(ExternalProject)
@@ -40,61 +67,43 @@ ExternalProject_Add(HP82240B-IRemu_tests
 pico_sdk_init()
 
 include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}/pio
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/pio
+    ${CMAKE_SOURCE_DIR}/include
+)
+
+add_executable(printer
+    src/redeye.c
+    src/printer.c
+)
+
+add_library(utf8transcoder STATIC
+    src/utf8transcoder.c
 )
 
 if(BUILD_PRINTER_TESTER)
-
-    add_executable(test_printer
-        src/redeye.c
-        src/test_printer.c
-    )
-
-    pico_generate_pio_header(test_printer ${CMAKE_CURRENT_SOURCE_DIR}/pio/redeye.pio)
-
-    if (PICO_CYW43_SUPPORTED)
-        target_link_libraries(test_printer
-            pico_cyw43_arch_none
-        )
-    endif()
-
-    target_link_libraries(test_printer
-        pico_stdlib
-        pico_bit_ops
-        hardware_pio
-        hardware_clocks
-        hardware_gpio
-    )
-
-    pico_enable_stdio_usb(test_printer 1)
-    pico_add_extra_outputs(test_printer)
-    
-else(BUILD_PRINTER_TESTER)
-
-    add_executable(printer
-        src/redeye.c
-        src/printer.c
-    )
-
-    pico_generate_pio_header(printer ${CMAKE_CURRENT_SOURCE_DIR}/pio/redeye.pio)
-
-    if (PICO_CYW43_SUPPORTED)
-        target_link_libraries(printer
-            pico_cyw43_arch_none
-        )
-    endif()
-
-    target_link_libraries(printer
-        pico_stdlib
-        pico_bit_ops
-        hardware_pio
-        hardware_clocks
-        hardware_gpio
-    )
-
-    pico_enable_stdio_usb(printer 1)
-    pico_add_extra_outputs(printer)
-
+    target_compile_definitions(printer PRIVATE BUILD_TESTER_APP)
 endif() #BUILD_PRINTER_TESTER
+
+pico_generate_pio_header(printer ${CMAKE_SOURCE_DIR}/pio/redeye.pio)
+
+configure_file(include/config.h.in 
+               ${CMAKE_BINARY_DIR}/config.h)
+
+if (PICO_CYW43_SUPPORTED)
+    target_link_libraries(printer
+        pico_cyw43_arch_none
+    )
+endif()
+
+target_link_libraries(printer
+    pico_stdlib
+    pico_bit_ops
+    hardware_pio
+    hardware_clocks
+    hardware_gpio
+    utf8transcoder
+)
+
+pico_enable_stdio_usb(printer 1)
+pico_add_extra_outputs(printer)
 
