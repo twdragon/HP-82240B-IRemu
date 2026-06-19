@@ -65,17 +65,27 @@ int main(void)
     sleep_ms(LINEFEED_DURATION);
     redeye_set_Roman8();
     redeye_putln(" OK", false);
-    redeye_putln("========================", false); */
+    redeye_putln("========================", false);  */
     // Graphics
     redeye_putc(REDEYE_CR);
     redeye_putesc(166);
     for(int i = 0; i < 166; i++)
-    {
-        redeye_putc(129);
-    }
+        redeye_putc(i);
+    redeye_putc(REDEYE_CR);
+    sleep_ms(LINEFEED_DURATION);
+    redeye_putesc(166);
+    for(int i = 0; i < 166; i++)
+        redeye_putc(255 - 165 + i);
     redeye_putc(REDEYE_LF);
-    // redeye_putln(" OK", false);
+    sleep_ms(LINEFEED_DURATION);
+    redeye_putln("Graphics: OK", false);
+    // Cyrillic
 #else // BUILD_TESTER_APP
+    sleep_ms(5000);
+    #ifdef SIGNAL_READY
+        redeye_putln("> Printer ready ", false);
+        redeye_putc(REDEYE_LF);
+    #endif
     while(true)
     {
     }

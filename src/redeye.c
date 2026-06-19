@@ -71,6 +71,40 @@ uint8_t redeye_transcode_latin1(const uint32_t uc)
     else if((codes[1] == 0xC2) && 
             ((codes[0] >= 0xA0) && (codes[0] <= 0xFF))) // ISO8859-1 part
         c = codes[0];
+    else if( ((codes[1] == 0xD0) && 
+              ((codes[0] >= 0x90) && (codes[0] <= 0xBF))) ||
+             ((codes[1] == 0xD1) && 
+              ((codes[0] >= 0x80) && (codes[0] <= 0x8F))) ) // Cyrillic part
+    {
+        static const uint8_t cyrillic_table0[48] = { // Decimal codes
+            //А    Б    В    Г    Д    Е    Ж    З
+             65,  98,  66, 132,  68,  69, 215,  51,
+            //И    Й    К    Л    М    Н    О    П
+             73, 209,  75, 182,  77,  72,  79, 156,
+            //Р    С    Т    У    Ф    Х    Ц    Ч
+             80,  67,  84,  89, 163,  88,  85,  52,
+            //Ш    Щ    Ъ    Ы    Ь    Э    Ю    Я
+            154, 154, 254, 198, 254, 162, 222, 182,
+            //а    б    в    г    д    е    ж    з
+             97, 146, 223, 132, 113, 101, 215,  51,
+            //и    й    к    л    м    н    о    п
+            105, 209, 107, 150,  77,  72, 111, 135
+        };
+        static const uint8_t cyrillic_table1[16] = {
+            //р    с    т    у    ф    х    ц    ч
+            112,  99, 116, 121, 149, 120, 117,  52,
+            //ш    щ    ъ    ы    ь    э    ю    я
+            154, 154, 254, 230, 254, 170, 222, 240
+        };
+        if(codes[1] == 0xD0)
+            c = cyrillic_table0[codes[0] - 0x90];
+        else
+            c = cyrillic_table1[codes[0] - 0x80];
+    }
+    else if((codes[1] == 0xD0) && (codes[0] == 0x81)) // Cyrillic Ё
+        c = 203;
+    else if((codes[1] == 0xD1) && (codes[0] == 0x91)) // Cyrillic ё
+        c = 235;
     else 
     {
         switch(uc) // Special HP substitution table
@@ -114,6 +148,64 @@ uint8_t redeye_transcode_latin1(const uint32_t uc)
             break;
         case 0xC991:    // alpha
             c = 0x8C;
+            break;
+        case 0xE28692:  // Rightwards Arrow
+            c = 0x8D;
+            break;
+        case 0xE28690:  // Leftwards Arrow
+            c = 0x8E;
+            break;
+        case 0xE28693:  // Downwards Arrow
+            c = 0x8F;
+            break;
+        case 0xE28691:  // Upwards Arrow
+            c = 0x90;
+            break;
+        case 0xC9A3:    // gamma
+            c = 0x91;
+            break;
+        case 0xCEB4:    // delta
+            c = 0x92;
+            break;
+        case 0xCEB5:    // epsilon
+            c = 0x93;
+            break;
+        case 0xCEB7:    // eta
+            c = 0x94;
+            break;
+        case 0xCEB8:    // theta
+            c = 0x95;
+            break;
+        case 0xCEBB:    // lambda
+            c = 0x96;
+            break;
+        case 0xCF81:    // rho
+            c = 0x97;
+            break;
+        case 0xCF83:    // sigma
+            c = 0x98;
+            break;
+        case 0xCF84:    // tau
+            c = 0x99;
+            break;
+        case 0xCF89:    // omega
+            c = 0x9A;
+            break;
+        case 0xE28886:  // Increment Sign
+            c = 0x9B;
+            break;
+        case 0xE2888F:  // N-ary Product Sign
+            c = 0x9C;
+            break;
+        case 0xE284A6:  // Ohm Sign
+            c = 0x9D;
+            break;
+        case 0xE2888E:  // End of Proof
+            c = 0x9E;
+            break;
+        case 0xE2889E:  // Infinity
+        case 0xC9B7:    // Closed omega
+            c = 0x9F;
             break;
         }
     }

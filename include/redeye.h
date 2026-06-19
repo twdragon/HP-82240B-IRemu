@@ -76,6 +76,7 @@ static inline void redeye_printer_init()
                                                          true);
     hard_assert(init_success);
     redeye_program_init(pio, sm, offset, IR_SIGNAL_PIN);
+    utf8_unpack_tables();
 }
 
 static inline void redeye_printer_shutdown()

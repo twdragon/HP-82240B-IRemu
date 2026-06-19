@@ -25,6 +25,10 @@ option(BUILD_PRINTER_TESTER
     "Builds printer tester application instead of the main driver"
     OFF
 )
+option(SIGNAL_PRINTER_READY
+    "Prints the signal 'Printer ready' after booting up the printer"
+    ON
+)
 set(PICO_GPIO_PIN_OFFSET 2)
 if(NOT DEFINED PICO_TRANSMITTER_PIN)
     set(PICO_TRANSMITTER_PIN 5)
@@ -83,6 +87,9 @@ add_library(utf8transcoder STATIC
 if(BUILD_PRINTER_TESTER)
     target_compile_definitions(printer PRIVATE BUILD_TESTER_APP)
 endif() #BUILD_PRINTER_TESTER
+if(SIGNAL_PRINTER_READY)
+    target_compile_definitions(printer PRIVATE SIGNAL_READY)
+endif() #SIGNAL_PRINTER_READY
 
 pico_generate_pio_header(printer ${CMAKE_SOURCE_DIR}/pio/redeye.pio)
 
