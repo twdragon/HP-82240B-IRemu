@@ -2,9 +2,6 @@
  * redeye.c
  * ─────────────
  * HP 82240B RedEye frame encoder and PIO FIFO interface.
- *
- * This module does NOT initialise hardware.  PIO setup lives in main().
- * Call hp_proto_set_pio() once after the SM is running.
  */
 
 #include "redeye.h"
@@ -15,7 +12,8 @@
 /* =========================================================================
  * W board LED helper functions
  * =========================================================================
- * Control Pico W board LED circuit */
+ * Control Pico W board LED circuit 
+ */
 
 int pico_led_init(void) 
 {
@@ -210,5 +208,15 @@ uint8_t redeye_transcode_latin1(const uint32_t uc)
         }
     }
     return c;
+}
+
+void redeye_set_word_wrap(void)
+{
+    redeye_linewrap = true;
+}
+
+void redeye_stop_word_wrap(void)
+{
+    redeye_linewrap = false;
 }
 

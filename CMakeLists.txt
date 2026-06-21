@@ -45,6 +45,10 @@ endif()
 if(NOT DEFINED WCHAR_LINE_WIDTH)
     set(WCHAR_LINE_WIDTH 12)
 endif()
+if(NOT ${WCHAR_LINE_WIDTH} LESS ${CHAR_LINE_WIDTH})
+    message(FATAL_ERROR 
+        "Please set WCHAR_LINE_WIDTH not more than CHAR_LINE_WIDTH!")
+endif()
 if(NOT DEFINED DOT_CHAR_WIDTH)
     set(DOT_CHAR_WIDTH 6)
 endif()
@@ -53,6 +57,15 @@ if(NOT DEFINED DOT_CHAR_HEIGHT)
 endif()
 if(NOT DEFINED DOT_LINE_WIDTH)
     set(DOT_LINE_WIDTH 166)
+endif()
+# =============================================================================
+# Printer controller options
+# =============================================================================
+if(NOT DEFINED PRINT_BUFFER_SIZE_FACTOR)
+    set(PRINT_BUFFER_SIZE_FACTOR 426) # 426 lines 24 characters each, ~10 KiB
+endif()
+if(NOT DEFINED PRINT_INPUT_BUFFER_SIZE)
+    set(PRINT_INPUT_BUFFER_SIZE 8192) # 8 KiB
 endif()
 # =============================================================================
 
@@ -84,6 +97,10 @@ add_library(utf8transcoder STATIC
     src/utf8transcoder.c
 )
 
+add_library(ringbuffer STATIC
+    src/printbuffer.c
+)
+
 if(BUILD_PRINTER_TESTER)
     target_compile_definitions(printer PRIVATE BUILD_TESTER_APP)
 endif() #BUILD_PRINTER_TESTER
@@ -105,11 +122,15 @@ endif()
 target_link_libraries(printer
     pico_stdlib
     pico_bit_ops
+    pico_unique_id
     hardware_pio
     hardware_clocks
     hardware_gpio
     utf8transcoder
+    ringbuffer
 )
+
+target_compile_definitions(printer PUBLIC PICO_RP2040_USB_DEVICE_ENUMERATION_FIX=1)
 
 pico_enable_stdio_usb(printer 1)
 pico_add_extra_outputs(printer)

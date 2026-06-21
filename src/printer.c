@@ -93,3 +93,4 @@ int main(void)
     redeye_printer_shutdown();
     return 0;
 }
+

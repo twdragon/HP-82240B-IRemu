@@ -16,6 +16,9 @@ add_executable(test_utf8transcode
 add_executable(test_bytesplit
     bytesplit.c
 )
+add_executable(test_ringbuffer
+    ringbuffer.c
+)
 
 add_test(ecc
     test_ecc
@@ -31,5 +34,9 @@ add_test(utf8transcode
 )
 add_test(bytesplit
     test_bytesplit
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+add_test(ringbuffer
+    test_ringbuffer
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )

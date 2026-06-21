@@ -22,26 +22,8 @@
 #include "utf8transcoder.h"
 
 #include "config.h"
-
-/* RedEye protocol command table */
-#define REDEYE_ESCAPE 27
-#define REDEYE_CR     4
-#define REDEYE_LF     10
-#define REDEYE_FILLER 158 
-#define REDEYE_RESET  255
-#define REDEYE_TEST   254
-#define REDEYE_SETWC  253
-#define REDEYE_ENDWC  252
-#define REDEYE_SETUL  251
-#define REDEYE_ENDUL  250
-#define REDEYE_ECMA94 249 // ISO8859-1 [Latin-1]
-#define REDEYE_ROMAN8 248
-
-/* RedEye state description variables */
-static bool redeye_underline = false;
-static bool redeye_wchar = false;
-static bool redeye_roman8 = true;
-static bool redeye_latin1 = false;
+#include "redeye_commands.h"
+#include "redeye_state.h"
 
 /* RedEye protocol definition functions - forward declarations */
 const uint8_t redeye_ecc      (uint8_t c);
@@ -101,43 +83,46 @@ static inline void redeye_putesc(const uint8_t c)
     sleep_ms(1);
 }
 
-static inline void redeye_set_underline()
+static inline void redeye_set_underline(void)
 {
     redeye_putesc(REDEYE_SETUL);
     redeye_underline = true;
 }
 
-static inline void redeye_stop_underline()
+static inline void redeye_stop_underline(void)
 {
     redeye_putesc(REDEYE_ENDUL);
     redeye_underline = false;
 }
 
-static inline void redeye_set_wchar()
+static inline void redeye_set_wchar(void)
 {
     redeye_putesc(REDEYE_SETWC);
     redeye_wchar = true;
 }
 
-static inline void redeye_stop_wchar()
+static inline void redeye_stop_wchar(void)
 {
     redeye_putesc(REDEYE_ENDWC);
     redeye_wchar = false;
 }
 
-static inline void redeye_set_Roman8()
+static inline void redeye_set_Roman8(void)
 {
     redeye_putesc(REDEYE_ROMAN8);
     redeye_roman8 = true;
     redeye_latin1 = false;
 }
 
-static inline void redeye_set_Latin1()
+static inline void redeye_set_Latin1(void)
 {
     redeye_putesc(REDEYE_ECMA94);
     redeye_roman8 = false;
     redeye_latin1 = true;
 }
+
+void redeye_set_word_wrap(void);
+void redeye_stop_word_wrap(void);
 
 static inline uint16_t redeye_putln(const char* str, const bool open)
 {
@@ -168,13 +153,12 @@ static inline uint16_t redeye_putln(const char* str, const bool open)
             strncpy(strbuf, str, len);
     }
     for(int i = 0; i < lprint; i++)
-    {
         redeye_putc((uint8_t)strbuf[i]);
-    }
     if(!open)
         redeye_putc(REDEYE_LF);
     sleep_ms(LINEFEED_DURATION);
     return ldiff;
 }
 
-#endif /* REDEYE_H */
+#endif // REDEYE_H
+
