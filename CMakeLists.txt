@@ -84,6 +84,7 @@ ExternalProject_Add(HP82240B-IRemu_tests
 pico_sdk_init()
 
 include_directories(
+    ${CMAKE_BINARY_DIR}
     ${CMAKE_SOURCE_DIR}/pio
     ${CMAKE_SOURCE_DIR}/include
 )
@@ -99,6 +100,16 @@ add_library(utf8transcoder STATIC
 
 add_library(ringbuffer STATIC
     src/printbuffer.c
+)
+
+add_library(usb_driver STATIC
+    src/usb_driver.c
+    src/usb_descriptors.c
+)
+target_link_libraries(usb_driver PUBLIC
+    pico_stdlib
+    tinyusb_device
+    tinyusb_board
 )
 
 if(BUILD_PRINTER_TESTER)
@@ -128,10 +139,11 @@ target_link_libraries(printer
     hardware_gpio
     utf8transcoder
     ringbuffer
+    usb_driver
 )
 
 target_compile_definitions(printer PUBLIC PICO_RP2040_USB_DEVICE_ENUMERATION_FIX=1)
 
-pico_enable_stdio_usb(printer 1)
+pico_enable_stdio_usb(printer 0)
 pico_add_extra_outputs(printer)
 

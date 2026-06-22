@@ -1,8 +1,10 @@
 #include "redeye.h"
+#include "usb_driver.h"
 
 int main(void)
 {
     redeye_printer_init();
+    usb_init();
 #ifdef BUILD_TESTER_APP // Building the tester application instead of the normal printer driver
     sleep_ms(5000);
     /*
@@ -76,10 +78,21 @@ int main(void)
     redeye_putesc(166);
     for(int i = 0; i < 166; i++)
         redeye_putc(255 - 165 + i);
+    redeye_putc(REDEYE_CR);
+    sleep_ms(LINEFEED_DURATION);
+    redeye_putln("100x: ", true);
+    redeye_putesc(100);
+    for(int i = 0; i < 100; i++)
+        redeye_putc(0x08);
     redeye_putc(REDEYE_LF);
     sleep_ms(LINEFEED_DURATION);
     redeye_putln("Graphics: OK", false);
     // Cyrillic
+    // Testing ends, running USB device
+    while(true)
+    {
+        tud_task();
+    }
 #else // BUILD_TESTER_APP
     sleep_ms(5000);
     #ifdef SIGNAL_READY

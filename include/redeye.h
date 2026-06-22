@@ -20,6 +20,7 @@
 
 #include "redeye.pio.h"
 #include "utf8transcoder.h"
+#include "printbuffer.h"
 
 #include "config.h"
 #include "redeye_commands.h"
@@ -121,9 +122,6 @@ static inline void redeye_set_Latin1(void)
     redeye_latin1 = true;
 }
 
-void redeye_set_word_wrap(void);
-void redeye_stop_word_wrap(void);
-
 static inline uint16_t redeye_putln(const char* str, const bool open)
 {
     int len = strlen(str);
@@ -159,6 +157,10 @@ static inline uint16_t redeye_putln(const char* str, const bool open)
     sleep_ms(LINEFEED_DURATION);
     return ldiff;
 }
+
+/* RedEye command definition functions - forward declarations */
+void redeye_set_word_wrap(void);
+void redeye_stop_word_wrap(void);
 
 #endif // REDEYE_H
 
