@@ -52,7 +52,7 @@ int main(int argc, char* argv[])
     while(buffer_request_read(&v))
         c++;
     if(!buffer_empty || buffer_full || 
-       c != (BUFFER_SIZE) || (read_index != 0))
+       c != (BUFFER_SIZE) || (read_index != 0) || (v != 0xEF))
         return 1;
     return 0;
 }

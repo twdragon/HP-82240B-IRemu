@@ -69,12 +69,10 @@ uint8_t redeye_transcode_latin1(const uint32_t uc)
     else if((codes[1] == 0xC2) && 
             ((codes[0] >= 0xA0) && (codes[0] <= 0xFF))) // ISO8859-1 part
         c = codes[0];
-    else if( ((codes[1] == 0xD0) && 
-              ((codes[0] >= 0x90) && (codes[0] <= 0xBF))) ||
-             ((codes[1] == 0xD1) && 
-              ((codes[0] >= 0x80) && (codes[0] <= 0x8F))) ) // Cyrillic part
+    else if( ((codes[1] == 0x04) && 
+              ((codes[0] >= 0x10) && (codes[0] <= 0x8F))) ) // Cyrillic part
     {
-        static const uint8_t cyrillic_table0[48] = { // Decimal codes
+        static const uint8_t cyrillic_table[64] = { // Decimal codes
             //А    Б    В    Г    Д    Е    Ж    З
              65,  98,  66, 132,  68,  69, 215,  51,
             //И    Й    К    Л    М    Н    О    П
@@ -86,22 +84,18 @@ uint8_t redeye_transcode_latin1(const uint32_t uc)
             //а    б    в    г    д    е    ж    з
              97, 146, 223, 132, 113, 101, 215,  51,
             //и    й    к    л    м    н    о    п
-            105, 209, 107, 150,  77,  72, 111, 135
-        };
-        static const uint8_t cyrillic_table1[16] = {
+            105, 209, 107, 150,  77,  72, 111, 135,
             //р    с    т    у    ф    х    ц    ч
             112,  99, 116, 121, 149, 120, 117,  52,
             //ш    щ    ъ    ы    ь    э    ю    я
             154, 154, 254, 230, 254, 170, 222, 240
         };
-        if(codes[1] == 0xD0)
-            c = cyrillic_table0[codes[0] - 0x90];
-        else
-            c = cyrillic_table1[codes[0] - 0x80];
+        if(codes[1] == 0x04)
+            c = cyrillic_table[codes[0] - 0x10];
     }
-    else if((codes[1] == 0xD0) && (codes[0] == 0x81)) // Cyrillic Ё
+    else if((codes[1] == 0x04) && (codes[0] == 0x51)) // Cyrillic Ё
         c = 203;
-    else if((codes[1] == 0xD1) && (codes[0] == 0x91)) // Cyrillic ё
+    else if((codes[1] == 0x04) && (codes[0] == 0x01)) // Cyrillic ё
         c = 235;
     else 
     {

@@ -11,6 +11,16 @@ get_filename_component(PICO_SDK_DIRECTORY ${PICO_SDK_IMPORTLIB} DIRECTORY)
 get_filename_component(PICO_SDK_DIRECTORY ${PICO_SDK_DIRECTORY}/.. REALPATH)
 set(ENV{PICO_SDK_PATH} "${PICO_SDK_DIRECTORY}")
 
+include(FetchContent)
+set(FETCHCONTENT_QUIET OFF)
+FetchContent_Declare(tinyusb
+    GIT_REPOSITORY "https://github.com/hathach/tinyusb.git"
+    GIT_TAG 94d5e74f63d49131d733cc847f1aa71c558101ac
+    GIT_PROGRESS ON
+)
+FetchContent_MakeAvailable(tinyusb)
+set(ENV{PICO_TINYUSB_PATH} "${tinyusb_SOURCE_DIR}")
+
 include(${PICO_SDK_IMPORTLIB})
 
 project(HP82240B-IRemu C CXX ASM)
@@ -91,6 +101,7 @@ include_directories(
 
 add_executable(printer
     src/redeye.c
+    src/usb_descriptors.c
     src/printer.c
 )
 
@@ -100,16 +111,6 @@ add_library(utf8transcoder STATIC
 
 add_library(ringbuffer STATIC
     src/printbuffer.c
-)
-
-add_library(usb_driver STATIC
-    src/usb_driver.c
-    src/usb_descriptors.c
-)
-target_link_libraries(usb_driver PUBLIC
-    pico_stdlib
-    tinyusb_device
-    tinyusb_board
 )
 
 if(BUILD_PRINTER_TESTER)
@@ -139,7 +140,8 @@ target_link_libraries(printer
     hardware_gpio
     utf8transcoder
     ringbuffer
-    usb_driver
+    tinyusb_device
+    tinyusb_board
 )
 
 target_compile_definitions(printer PUBLIC PICO_RP2040_USB_DEVICE_ENUMERATION_FIX=1)
