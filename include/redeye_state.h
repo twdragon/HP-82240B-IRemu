@@ -2,11 +2,13 @@
 #define REDEYE_STATE_H
 
 /* RedEye state description variables */
-static bool redeye_underline = false;
-static bool redeye_wchar = false;
-static bool redeye_roman8 = true;
-static bool redeye_latin1 = false;
-static bool redeye_linewrap = false;
+extern volatile bool redeye_underline;
+extern volatile bool redeye_wchar;
+extern volatile bool redeye_roman8;
+extern volatile bool redeye_latin1;
+extern volatile bool redeye_linewrap;
+extern volatile bool redeye_error;
+extern volatile bool redeye_busy;
 
 #endif // REDEYE_STATE_H
 

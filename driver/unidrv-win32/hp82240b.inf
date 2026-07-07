@@ -1,0 +1,47 @@
+; hp82240b.inf - Unidrv minidriver installer alphanumeric mode of HP82240B thermal printer
+
+[Version]
+Signature   = "$Windows NT$"
+Provider    = %ProviderName%
+ClassGUID   = {4D36E979-E325-11CE-BFC1-08002BE10318}
+Class       = Printer
+DriverVer   = 07/06/2026,0.0.0.1
+CatalogFile = hp82240b.cat
+
+[Manufacturer]
+%ManufacturerName% = ModelsSection, NTamd64
+
+[ModelsSection.NTamd64]
+%PrinterModelName% = ThermalInstall, "Thermal24Alpha"
+
+[ThermalInstall]
+CopyFiles       = @Thermal24Alpha.gpd
+DataSection     = ThermalInstall_Data
+DataFile        = ntprint.inf
+InfModule       = ntprint.dll
+DriverFile      = unidrv.dll
+ConfigFile      = unidrvui.dll
+HelpFile        = unidrv.hlp
+Include         = ntprint.inf
+Needs           = UNIDRV.OEM
+
+[ThermalInstall_Data]
+GPD                = Thermal24Alpha.gpd
+DataSection        = UNIDRV_DATA
+DataFile           = ntprint.inf
+
+[SourceDisksNames]
+1 = %DiskName%
+
+[SourceDisksFiles]
+Thermal24Alpha.gpd = 1
+
+[DestinationDirs]
+DefaultDestDir           = 66000 ; %SystemRoot%\System32\spool\drivers\x64\3
+Thermal24Alpha.CopyFiles = 66000
+
+[Strings]
+ProviderName      = "YourCompany"
+ManufacturerName  = "YourCompany Thermal Devices"
+PrinterModelName  = "Thermal Printer 24CPL Alphanumeric"
+DiskName          = "Thermal24Alpha Driver Disk"

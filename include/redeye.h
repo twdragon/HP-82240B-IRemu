@@ -26,22 +26,23 @@
 #include "redeye_commands.h"
 #include "redeye_state.h"
 
-/* RedEye protocol definition functions - forward declarations */
+// RedEye protocol definition functions - forward declarations
+// ============================================================================
 const uint8_t redeye_ecc      (uint8_t c);
 const uint16_t redeye_frame   (uint8_t c);
 
-/* Character code substitution routines API */
-uint8_t redeye_transcode_latin1(const uint32_t uc);
-
-/* LED functions */
+// LED functions
+// ============================================================================
 int pico_led_init(void);
 void pico_set_led(bool led_on);
 
-/* Printer init sequence and static PIO initialisation addresses */
+// Printer init sequence and static PIO initialisation addresses
+// ============================================================================
 static PIO  pio;
 static uint sm;
 static uint offset;
 static uint8_t initialised = 0x00;
+
 static inline void redeye_printer_init()
 {
     if(initialised == 0xFF) return;
@@ -60,6 +61,14 @@ static inline void redeye_printer_init()
     hard_assert(init_success);
     redeye_program_init(pio, sm, offset, IR_SIGNAL_PIN);
     utf8_unpack_tables();
+    
+    redeye_underline = false;
+    redeye_wchar     = false;
+    redeye_roman8    = true;
+    redeye_latin1    = false;
+    redeye_linewrap  = false;
+    redeye_error     = false;
+    redeye_busy      = false;
 }
 
 static inline void redeye_printer_shutdown()
@@ -68,8 +77,8 @@ static inline void redeye_printer_shutdown()
         pio_remove_program_and_unclaim_sm(&redeye_program, pio, sm, offset);
 }
 
-/* RedEye protocol definition functions - inline low-level */
-
+// RedEye protocol definition functions - inline low-level
+// ============================================================================
 static inline void redeye_putc(const uint8_t c)
 {
     pico_set_led(true);
@@ -122,6 +131,8 @@ static inline void redeye_set_Latin1(void)
     redeye_latin1 = true;
 }
 
+// Printing helper functions - inline low-level
+// ============================================================================
 static inline uint16_t redeye_putln(const char* str, const bool open)
 {
     int len = strlen(str);
@@ -158,7 +169,97 @@ static inline uint16_t redeye_putln(const char* str, const bool open)
     return ldiff;
 }
 
-/* RedEye command definition functions - forward declarations */
+static inline void redeye_print_buffer(void)
+{
+    uint8_t c;
+    static size_t safety_counter = 0;
+    static size_t wrapper_counter = 0;
+    size_t last_spacer;
+    static bool prev_empty = true;
+    static uint8_t line[CHAR_LINE_WIDTH];
+    if(buffer_empty)
+        return;
+    buffer_request_read(&c);
+    if(buffer_usage() <= PRINT_BUFFER_LOWWATER)
+        redeye_busy = false;
+    // Start printing characters
+    if(redeye_linewrap) // Word wrapper activated
+    {
+        bool spacer = false; // Spacer character detector
+        switch(c)
+        {
+        case 0x20: // Natural space
+        case 127:  // Filler space
+        case 160:  // ISO8859-1 filler space
+            spacer = true;
+            break;
+        default: 
+            spacer = false;
+            break;
+        }
+        if(redeye_wchar && spacer) // Wide characters: line wrap on every space
+        {
+            redeye_putc(REDEYE_LF);
+            sleep_ms(LINEFEED_DURATION);
+        }
+        else // Normal characters: buffered output with REDEYE_LF on demand
+        {
+            line[wrapper_counter++] = c;
+            if(buffer_empty || wrapper_counter >= CHAR_LINE_WIDTH)
+            {
+                for(last_spacer = wrapper_counter - 1; 
+                    last_spacer != 0; 
+                    last_spacer--)
+                {
+                    if((line[last_spacer] == 0x20) || 
+                    (line[last_spacer] == 127)  ||
+                    (line[last_spacer] == 160))
+                        break;
+                }
+                for(size_t i = 0; i <= last_spacer; i++)
+                {
+                    redeye_putc(line[i]);
+                    if((safety_counter++ > CHAR_LINE_WIDTH) || (line[i] == REDEYE_LF))
+                    {
+                        sleep_ms(LINEFEED_DURATION);
+                        safety_counter = 0;
+                    }
+                }
+                redeye_putc(REDEYE_LF);
+                sleep_ms(LINEFEED_DURATION);
+                if(last_spacer != wrapper_counter)
+                    for(size_t i = last_spacer + 1; i < wrapper_counter; i++)
+                    {
+                        redeye_putc(line[i]);
+                        if((safety_counter++ > CHAR_LINE_WIDTH) || (line[i] == REDEYE_LF))
+                        {
+                            sleep_ms(LINEFEED_DURATION);
+                            safety_counter = 0;
+                        }
+                    }
+                wrapper_counter = 0;
+            }
+        }
+    }
+    else // Unbuffered output with safety counter
+    {
+        redeye_putc(c);
+        if((safety_counter++ > CHAR_LINE_WIDTH) || (c == REDEYE_LF))
+        {
+            sleep_ms(LINEFEED_DURATION);
+            safety_counter = 0;
+        }
+    }
+    if(!prev_empty && buffer_empty) // End of print: send REDEYE_LF
+    {
+        redeye_putc(REDEYE_LF);      // Implicitly ends printing of the last
+        sleep_ms(LINEFEED_DURATION); // remaining characters in the string
+    }
+    prev_empty = buffer_empty;
+}
+
+// RedEye command definition functions - forward declarations
+// ============================================================================
 void redeye_set_word_wrap(void);
 void redeye_stop_word_wrap(void);
 

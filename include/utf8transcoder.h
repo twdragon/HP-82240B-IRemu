@@ -79,4 +79,6 @@ static inline const uint8_t * utf8_decode(const uint8_t *m,
     return m;
 }
 
+uint8_t redeye_transcode_latin1(const uint32_t uc);
+
 #endif /* UTF8TRANSCODER_H */

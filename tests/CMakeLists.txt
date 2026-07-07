@@ -19,6 +19,12 @@ add_executable(test_bytesplit
 add_executable(test_ringbuffer
     ringbuffer.c
 )
+add_executable(test_pngle
+    pngle-snapshot/miniz.c
+    pngle-snapshot/pngle.c
+    pngle.c
+)
+target_include_directories(test_pngle PRIVATE pngle-snapshot)
 
 add_test(ecc
     test_ecc
@@ -38,5 +44,9 @@ add_test(bytesplit
 )
 add_test(ringbuffer
     test_ringbuffer
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+add_test(pngle
+    test_pngle
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
