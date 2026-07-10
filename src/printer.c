@@ -3,9 +3,20 @@
 #include "usb_descriptors.h"
 #include "pico/multicore.h"
 
+// Bluetooth support
+// ============================================================================
 #ifdef CONTROLLER_SUPPORTS_BLUETOOTH
-    #include "btstack_config.h"
+#include "btstack.h"
+#include "btstack_config.h"
+
+int btstack_main(int argc, const char *argv[]) 
+{
+}
+
 #endif
+
+// Wi-Fi support
+// ============================================================================
 #ifdef CONTROLLER_SUPPORTS_WIFI
     #include "lwipopts.h"
 #endif
@@ -75,6 +86,10 @@ int main(void)
 #endif // SIGNAL_READY
     redeye_set_Latin1();
     buffer_reset();
+#ifdef CONTROLLER_SUPPORTS_BLUETOOTH
+    btstack_main(0, NULL);
+    btstack_run_loop_execute();
+#endif
     while(true)
     {
         redeye_print_buffer();

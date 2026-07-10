@@ -24,6 +24,16 @@ FetchContent_Declare(tinyusb
 FetchContent_MakeAvailable(tinyusb)
 set(ENV{PICO_TINYUSB_PATH} "${tinyusb_SOURCE_DIR}")
 
+# Custom BTStack
+# =============================================================================
+FetchContent_Declare(btstack
+    GIT_REPOSITORY "https://github.com/bluekitchen/btstack.git"
+    GIT_TAG "v1.8.2"
+    GIT_PROGRESS ON
+)
+FetchContent_MakeAvailable(btstack)
+set(ENV{PICO_BTSTACK_PATH} "${btstack_SOURCE_DIR}")
+
 # PNGle
 # =============================================================================
 FetchContent_Declare(pngle
@@ -126,6 +136,17 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/include
 )
 
+list(APPEND PRINTER_TARGET_FILES
+    src/redeye.c
+    src/usb_descriptors.c
+    src/printer.c
+)
+if(USE_WIFI)
+    list(APPEND PRINTER_TARGET_FILES
+        src/wifi.c
+    )
+endif()
+
 if(BUILD_PRINTER_TESTER)
     add_executable(printer
     src/redeye.c
@@ -133,9 +154,7 @@ if(BUILD_PRINTER_TESTER)
 )
 else()
     add_executable(printer
-        src/redeye.c
-        src/usb_descriptors.c
-        src/printer.c
+        ${PRINTER_TARGET_FILES}
     )
 endif() #BUILD_PRINTER_TESTER
 
