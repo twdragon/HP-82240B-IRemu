@@ -6,13 +6,9 @@
 // Bluetooth support
 // ============================================================================
 #ifdef CONTROLLER_SUPPORTS_BLUETOOTH
-#include "btstack.h"
-#include "btstack_config.h"
-
-int btstack_main(int argc, const char *argv[]) 
-{
-}
-
+    #include "btstack.h"
+    #include "btstack_config.h"
+    int btstack_main(int argc, const char * argv[]);
 #endif
 
 // Wi-Fi support

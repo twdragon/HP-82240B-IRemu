@@ -146,6 +146,11 @@ if(USE_WIFI)
         src/wifi.c
     )
 endif()
+if(USE_BLUETOOTH)
+    list(APPEND PRINTER_TARGET_FILES
+        src/bluetooth.c
+    )
+endif()
 
 if(BUILD_PRINTER_TESTER)
     add_executable(printer
@@ -195,6 +200,7 @@ if (PICO_CYW43_SUPPORTED)
                 pico_cyw43_arch_lwip_threadsafe_background
                 pico_btstack_classic
                 pico_btstack_cyw43
+#                pico_btstack_ble 
                 pico_lwip_iperf
             )
             target_compile_definitions(printer PRIVATE CONTROLLER_SUPPORTS_WIFI)
@@ -212,6 +218,7 @@ if (PICO_CYW43_SUPPORTED)
                 pico_cyw43_arch_none
                 pico_btstack_classic
                 pico_btstack_cyw43
+#                pico_btstack_ble 
             )
             target_compile_definitions(printer PRIVATE CONTROLLER_SUPPORTS_BLUETOOTH)
         else()

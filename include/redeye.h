@@ -49,7 +49,8 @@ static inline void redeye_printer_init()
     initialised = 0xFF;
 
     stdio_init_all();
-    pico_led_init(); 
+    if(pico_led_init() != PICO_OK)
+        panic("Failed Board Init!");
     bool init_success = 
         pio_claim_free_sm_and_add_program_for_gpio_range(&redeye_program, 
                                                          &pio,
@@ -75,6 +76,9 @@ static inline void redeye_printer_shutdown()
 {
     if(initialised == 0xFF)
         pio_remove_program_and_unclaim_sm(&redeye_program, pio, sm, offset);
+#if defined(CYW43_WL_GPIO_LED_PIN)
+    cyw43_arch_deinit();
+#endif
 }
 
 // RedEye protocol definition functions - inline low-level
@@ -181,7 +185,10 @@ static inline void redeye_print_buffer(void)
         return;
     buffer_request_read(&c);
     if(buffer_usage() <= PRINT_BUFFER_LOWWATER)
+    {
+        sleep_ms(LINEFEED_DURATION);
         redeye_busy = false;
+    }
     // Start printing characters
     if(redeye_linewrap) // Word wrapper activated
     {
